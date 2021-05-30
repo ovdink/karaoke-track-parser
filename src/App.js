@@ -63,12 +63,21 @@ const App = () => {
     setUrl(URL.createObjectURL(blob));
   };
 
+  const convertToMs = (currentTime) => {
+    const ms = currentTime * 1000;
+
+    const minutes = Math.floor(ms / 60000);
+    const seconds = (ms % 60000) / 1000;
+
+    return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+  };
+
   const takeBeginTime = () => {
-    setBeginTime(current.currentTime);
+    setBeginTime(convertToMs(current.currentTime));
   };
 
   const takeEndTime = () => {
-    setEndTime(current.currentTime);
+    setEndTime(convertToMs(current.currentTime));
   };
 
   const onParse = () => {
@@ -101,7 +110,7 @@ const App = () => {
         style={{ cursor: 'pointer', backgroundColor: background }}
         onClick={() => setActualStringIndex(index)}
       >
-        {begin} {end} {text}
+        ({begin} — {end}) {text}
       </li>
     );
   };
@@ -162,7 +171,9 @@ const App = () => {
         </div>
       )}
 
-      {copyStatus && <div style={{ fontWeight: 'bold', marginTop: '10px' }}>OK!</div>}
+      {copyStatus && (
+        <div style={{ fontWeight: 'bold', marginTop: '10px' }}>OK!</div>
+      )}
     </>
   );
 };
