@@ -24,7 +24,7 @@ export const Input = ({ setLoaded, isLoaded }) => {
   return (
     <input
       type="file"
-      accept="*"
+      accept="audio/*"
       title=""
       onChange={(e) => {
         addFileToDB(e.target.files[0]);

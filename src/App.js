@@ -13,11 +13,14 @@ const App = () => {
   const [endTime, setEndTime] = useState(null);
 
   const [textArea, setTextArea] = useState('');
-  const [fragmentObj, setFragmentObj] = useState([]);
+  const [fragmentArr, setFragmentArr] = useState([]);
+  const [json, setJson] = useState('');
 
-  const [actualStringIndex, setActualStringIndex] = useState('0');
+  const [actualStringIndex, setActualStringIndex] = useState(0);
 
   const audioRef = useRef();
+
+  const current = audioRef.current?.audioEl.current;
 
   useEffect(() => {
     db.song.clear();
@@ -33,7 +36,23 @@ const App = () => {
     })();
   }, [isLoaded]);
 
-  const currentTime = audioRef.current?.audioEl.current.currentTime;
+  useEffect(() => {
+    setTime('begin', beginTime);
+  }, [beginTime]);
+
+  useEffect(() => {
+    setTime('end', endTime);
+  }, [endTime]);
+
+  const setTime = (keyTime, valueTime) => {
+    if (fragmentArr[actualStringIndex]) {
+      const tmpFragment = [...fragmentArr];
+
+      tmpFragment[actualStringIndex][keyTime] = valueTime;
+
+      setFragmentArr(tmpFragment);
+    }
+  };
 
   const getURL = (file) => {
     const blob = new Blob([file]);
@@ -42,39 +61,36 @@ const App = () => {
   };
 
   const takeBeginTime = () => {
-    console.log('begin:', currentTime);
-
-    setBeginTime(currentTime);
-
-    Object.entries(fragmentObj).reduce(
-      (acc, [indexKey, { text, begin, end }]) => {
-        if (actualStringIndex === String(indexKey)) {
-          acc[indexKey] = { text, begin: beginTime, end };
-
-          console.log(fragmentObj);
-          console.log(acc);
-
-          return { ...fragmentObj, ...acc };
-        }
-      },
-      fragmentObj
-    );
+    setBeginTime(current.currentTime);
   };
 
   const takeEndTime = () => {
-    console.log('end:', currentTime);
-
-    setEndTime(currentTime);
+    setEndTime(current.currentTime);
   };
 
   const onParse = () => {
     const arr = textArea.split('\n');
 
-    setFragmentObj(
-      arr.reduce((acc, item, index) => {
-        acc[index] = { text: item, begin: '-', end: '-' };
-        return acc;
-      }, {})
+    const defFragmentObj = arr.map((item) => {
+      return { text: item, begin: '-', end: '-' };
+    });
+
+    setFragmentArr(defFragmentObj);
+  };
+
+  const listCb = (meta, index) => {
+    const { begin, end, text } = meta;
+
+    const background = index === actualStringIndex ? 'pink' : 'white';
+
+    return (
+      <li
+        key={index}
+        style={{ cursor: 'pointer', backgroundColor: background }}
+        onClick={() => setActualStringIndex(index)}
+      >
+        {begin} {end} {text}
+      </li>
     );
   };
 
@@ -88,11 +104,8 @@ const App = () => {
             <ReactAudioPlayer
               src={url}
               autoPlay={false}
-              controls
               ref={audioRef}
-              onLoadedMetadata={() => console.log('song is loaded')}
-              // onPlay={checkAudioFn}
-              // onPause={checkAudioFn}
+              controls
             />
             <div>
               <button children="begin" onClick={takeBeginTime} />
@@ -113,27 +126,18 @@ const App = () => {
 
       <button children="parse" onClick={onParse} />
 
-      {Object.keys(fragmentObj).length > 0 && (
-        <ul>
-          {Object.entries(fragmentObj).map(([index, { text, begin, end }]) => (
-            <li
-              key={index}
-              style={
-                index === actualStringIndex
-                  ? { cursor: 'pointer', backgroundColor: 'pink' }
-                  : { cursor: 'pointer', backgroundColor: 'white' }
-              }
-              onClick={() => setActualStringIndex(index)}
-            >
-              {begin} {end} {text}
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul>{fragmentArr.map(listCb)}</ul>
+
+      <hr />
+
+      <button
+        children="to json"
+        onClick={() => setJson(JSON.stringify(fragmentArr))}
+      />
+
+      <div style={{ margin: '20px' }}>{json}</div>
     </>
   );
 };
-
-// {0: {text: dsadada, begin: 1, end: 2}, 1: {text: dsadada, begin: 1, end: 2} }
 
 export default App;
