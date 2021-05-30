@@ -18,7 +18,10 @@ const App = () => {
 
   const [actualStringIndex, setActualStringIndex] = useState(0);
 
+  const [copyStatus, setCopyStatus] = useState(false);
+
   const audioRef = useRef();
+  const textAreaJsonRef = useRef();
 
   const current = audioRef.current?.audioEl.current;
 
@@ -78,6 +81,15 @@ const App = () => {
     setFragmentArr(defFragmentObj);
   };
 
+  const copyToBuffer = (e) => {
+    textAreaJsonRef.current.select();
+    document.execCommand('copy');
+
+    e.target.focus();
+
+    setCopyStatus(true);
+  };
+
   const listCb = (meta, index) => {
     const { begin, end, text } = meta;
 
@@ -117,7 +129,7 @@ const App = () => {
 
       <div>
         <textarea
-          style={{ marginTop: '20px' }}
+          style={{ marginTop: '20px', height: '200px', width: '400px' }}
           onChange={({ target: { value } }) => {
             setTextArea(value);
           }}
@@ -130,12 +142,27 @@ const App = () => {
 
       <hr />
 
-      <button
-        children="to json"
-        onClick={() => setJson(JSON.stringify(fragmentArr))}
+      <div>
+        <button
+          children="to json"
+          onClick={() => setJson(JSON.stringify(fragmentArr))}
+        />
+      </div>
+
+      <textarea
+        style={{ marginTop: '20px', height: '100px', width: '400px' }}
+        ref={textAreaJsonRef}
+        value={json}
+        readOnly
       />
 
-      <div style={{ margin: '20px' }}>{json}</div>
+      {json && (
+        <div>
+          <button children="copy to buffer" onClick={copyToBuffer} />
+        </div>
+      )}
+
+      {copyStatus && <div style={{ fontWeight: 'bold', marginTop: '10px' }}>OK!</div>}
     </>
   );
 };
