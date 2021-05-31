@@ -11,6 +11,7 @@ const App = () => {
 
   const [beginTime, setBeginTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
+  const [currentTimeShow, setCurrentTimeShow] = useState(0);
 
   const [textArea, setTextArea] = useState('');
   const [fragmentArr, setFragmentArr] = useState([]);
@@ -47,6 +48,14 @@ const App = () => {
     setTime('end', endTime);
   }, [endTime]);
 
+  // const curT = current?.currentTime;
+
+  useEffect(() => {
+    console.log('render')
+    // setCurrentTimeShow(current?.currentTime);
+
+  }, [current?.currentTime]);
+
   const setTime = (keyTime, valueTime) => {
     if (fragmentArr[actualStringIndex]) {
       const tmpFragment = [...fragmentArr];
@@ -73,6 +82,11 @@ const App = () => {
   };
 
   const takeBeginTime = () => {
+    // current.playbackRate = 0.5;
+    console.log(convertToMs(current.duration));
+
+    // const duration = document.getElementById('duration');
+
     setBeginTime(convertToMs(current.currentTime));
   };
 
@@ -128,6 +142,11 @@ const App = () => {
               ref={audioRef}
               controls
             />
+            <div style={{ display: 'flex' }}>
+              <div>{convertToMs(currentTimeShow)}</div>
+              <div>&nbsp;/&nbsp;</div>
+              <div>{convertToMs(current?.duration)}</div>
+            </div>
             <div>
               <button children="begin" onClick={takeBeginTime} />
               <button children="end" onClick={takeEndTime} />
@@ -174,6 +193,8 @@ const App = () => {
       {copyStatus && (
         <div style={{ fontWeight: 'bold', marginTop: '10px' }}>OK!</div>
       )}
+
+      <audio controls="controls"></audio>
     </>
   );
 };
