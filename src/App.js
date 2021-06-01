@@ -1,5 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from 'react';
 import ReactAudioPlayer from 'react-audio-player';
+// import { useHotkeys } from 'react-hotkeys-hook';
+import {useHotkey} from '@react-hook/hotkey'
+
 
 import { db } from './db';
 
@@ -9,22 +13,36 @@ const App = () => {
   const [isLoaded, setLoaded] = useState(0);
   const [url, setUrl] = useState(null);
 
+  const [isPlaying, setPlaying] = useState(false);
+
   const [beginTime, setBeginTime] = useState(null);
   const [endTime, setEndTime] = useState(null);
   const [currentTimeShow, setCurrentTimeShow] = useState(0);
 
   const [textArea, setTextArea] = useState('');
+  const [showFirstArea, setShowFirstArea] = useState(true);
+
   const [fragmentArr, setFragmentArr] = useState([]);
   const [json, setJson] = useState('');
 
-  const [actualStringIndex, setActualStringIndex] = useState(0);
+  const [actualStringIndex, setActualStringIndex] = useState(-1);
 
   const [copyStatus, setCopyStatus] = useState(false);
 
-  const audioRef = useRef();
-  const textAreaJsonRef = useRef();
+  // _____input speed state_____________
+  const [speed, setSpeed] = useState(1);
+
+  // _____refs___________________________
+  const audioRef = useRef(null);
+  const textAreaJsonRef = useRef(null);
 
   const current = audioRef.current?.audioEl.current;
+
+  // _____hot-keys______________________
+
+  
+
+  // ____________________________________
 
   useEffect(() => {
     db.song.clear();
@@ -46,15 +64,29 @@ const App = () => {
 
   useEffect(() => {
     setTime('end', endTime);
+
+    setActualStringIndex((actualStringIndex) => actualStringIndex + 1);
   }, [endTime]);
 
-  // const curT = current?.currentTime;
-
+  /* for slowly speed */
   useEffect(() => {
-    console.log('render')
-    // setCurrentTimeShow(current?.currentTime);
+    if (current) {
+      current.playbackRate = speed;
+    }
+  }, [speed]);
 
-  }, [current?.currentTime]);
+  /*____for currentTime update in UI ____*/
+  // function tick() {
+  //   setCurrentTimeShow(convertToMs(current?.currentTime));
+  // }
+
+  // useEffect(() => {
+  //   const timer = setInterval(tick, 100);
+
+  //   return () => clearInterval(timer);
+  // }, [tick]);
+
+  /*_________________________________________*/
 
   const setTime = (keyTime, valueTime) => {
     if (fragmentArr[actualStringIndex]) {
@@ -76,16 +108,19 @@ const App = () => {
     const ms = currentTime * 1000;
 
     const minutes = Math.floor(ms / 60000);
-    const seconds = (ms % 60000) / 1000;
+    const seconds = ((ms % 60000) / 1000).toFixed(4);
 
     return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
   };
 
-  const takeBeginTime = () => {
-    // current.playbackRate = 0.5;
-    console.log(convertToMs(current.duration));
+  const convertTimeToMs = (time) => {
+    const res = Number(time.split(':')[0]) * 60 + Number(time.split(':')[1]);
 
-    // const duration = document.getElementById('duration');
+    return res;
+  };
+
+  const takeBeginTime = () => {
+    console.log('audioEl in begin time fn', current);
 
     setBeginTime(convertToMs(current.currentTime));
   };
@@ -93,6 +128,25 @@ const App = () => {
   const takeEndTime = () => {
     setEndTime(convertToMs(current.currentTime));
   };
+
+  const playPause = () => {
+    // // Get state of song
+
+    console.log('in playPause',current)
+
+    if (isPlaying) {
+      // Pause the song if it is playing
+      current.pause();
+    } else {
+      // Play the song if it is paused
+      current.play();
+    }
+
+    // // Change the state of song
+    setPlaying(!isPlaying);
+  };
+
+  useHotkeys('space', playPause);
 
   const onParse = () => {
     const arr = textArea.split('\n');
@@ -102,6 +156,8 @@ const App = () => {
     });
 
     setFragmentArr(defFragmentObj);
+
+    setShowFirstArea(false);
   };
 
   const copyToBuffer = (e) => {
@@ -113,8 +169,18 @@ const App = () => {
     setCopyStatus(true);
   };
 
-  const listCb = (meta, index) => {
-    const { begin, end, text } = meta;
+  const onListenCurrentTime = (timeMs) => {
+    setCurrentTimeShow(convertToMs(timeMs));
+  };
+
+  const pressEnterKeyInInput = (e) => {
+    if (e.key === 'Enter' && current.currentTime) {
+      current.currentTime = convertTimeToMs(currentTimeShow);
+    }
+  };
+
+  const listCb = (data, index) => {
+    const { text, begin, end } = data;
 
     const background = index === actualStringIndex ? 'pink' : 'white';
 
@@ -136,14 +202,36 @@ const App = () => {
       <div style={{ marginTop: '20px' }}>
         {url && (
           <>
-            <ReactAudioPlayer
-              src={url}
-              autoPlay={false}
-              ref={audioRef}
-              controls
-            />
             <div style={{ display: 'flex' }}>
-              <div>{convertToMs(currentTimeShow)}</div>
+              <ReactAudioPlayer
+                src={url}
+                autoPlay={false}
+                ref={audioRef}
+                controls
+                listenInterval={50}
+                onListen={onListenCurrentTime}
+                onSeeked={() => {
+                  setCurrentTimeShow(convertToMs(current?.currentTime));
+                }}
+                onPlay={() => setPlaying(!isPlaying)}
+                onPause={() => setPlaying(!isPlaying)}
+              />{' '}
+              <div>Speed (step=0.1; normal speed=1)</div>
+              <input
+                type="number"
+                step={0.1}
+                max={1}
+                min={0.1}
+                value={speed}
+                onChange={({ target: { value } }) => setSpeed(value)}
+              />
+            </div>
+            <div style={{ display: 'flex' }}>
+              <input
+                value={currentTimeShow}
+                onChange={({ target: { value } }) => setCurrentTimeShow(value)}
+                onKeyDown={pressEnterKeyInInput}
+              />
               <div>&nbsp;/&nbsp;</div>
               <div>{convertToMs(current?.duration)}</div>
             </div>
@@ -155,16 +243,19 @@ const App = () => {
         )}
       </div>
 
-      <div>
-        <textarea
-          style={{ marginTop: '20px', height: '200px', width: '400px' }}
-          onChange={({ target: { value } }) => {
-            setTextArea(value);
-          }}
-        />
-      </div>
-
-      <button children="parse" onClick={onParse} />
+      {showFirstArea && (
+        <div>
+          <div>
+            <textarea
+              style={{ marginTop: '20px', height: '200px', width: '400px' }}
+              onChange={({ target: { value } }) => {
+                setTextArea(value);
+              }}
+            />
+          </div>
+          <button children="parse" onClick={onParse} />
+        </div>
+      )}
 
       <ul>{fragmentArr.map(listCb)}</ul>
 
@@ -193,8 +284,6 @@ const App = () => {
       {copyStatus && (
         <div style={{ fontWeight: 'bold', marginTop: '10px' }}>OK!</div>
       )}
-
-      <audio controls="controls"></audio>
     </>
   );
 };
