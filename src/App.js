@@ -1,9 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useState } from 'react';
 import ReactAudioPlayer from 'react-audio-player';
-// import { useHotkeys } from 'react-hotkeys-hook';
-import {useHotkey} from '@react-hook/hotkey'
-
+import { GlobalHotKeys } from 'react-hotkeys';
 
 import { db } from './db';
 
@@ -38,12 +36,6 @@ const App = () => {
 
   const current = audioRef.current?.audioEl.current;
 
-  // _____hot-keys______________________
-
-  
-
-  // ____________________________________
-
   useEffect(() => {
     db.song.clear();
   }, []);
@@ -75,6 +67,12 @@ const App = () => {
     }
   }, [speed]);
 
+  useEffect(() => {
+    if (current) {
+      playPause();
+    }
+  }, [isPlaying]);
+
   /*____for currentTime update in UI ____*/
   // function tick() {
   //   setCurrentTimeShow(convertToMs(current?.currentTime));
@@ -87,6 +85,14 @@ const App = () => {
   // }, [tick]);
 
   /*_________________________________________*/
+
+  const playPause = () => {
+    if (isPlaying) {
+      current.pause();
+    } else {
+      current.play();
+    }
+  };
 
   const setTime = (keyTime, valueTime) => {
     if (fragmentArr[actualStringIndex]) {
@@ -114,39 +120,19 @@ const App = () => {
   };
 
   const convertTimeToMs = (time) => {
-    const res = Number(time.split(':')[0]) * 60 + Number(time.split(':')[1]);
-
-    return res;
+    return Number(time.split(':')[0]) * 60 + Number(time.split(':')[1]);
   };
 
   const takeBeginTime = () => {
-    console.log('audioEl in begin time fn', current);
+    // doenst work with hotkey, but work with button (begin):   const current = audioRef.current?.audioEl.current;
+    // setBeginTime(convertToMs(current.currentTime));
 
-    setBeginTime(convertToMs(current.currentTime));
+    setBeginTime(convertToMs(audioRef.current?.audioEl.current.currentTime));
   };
 
   const takeEndTime = () => {
-    setEndTime(convertToMs(current.currentTime));
+    setEndTime(convertToMs(audioRef.current?.audioEl.current.currentTime));
   };
-
-  const playPause = () => {
-    // // Get state of song
-
-    console.log('in playPause',current)
-
-    if (isPlaying) {
-      // Pause the song if it is playing
-      current.pause();
-    } else {
-      // Play the song if it is paused
-      current.play();
-    }
-
-    // // Change the state of song
-    setPlaying(!isPlaying);
-  };
-
-  useHotkeys('space', playPause);
 
   const onParse = () => {
     const arr = textArea.split('\n');
@@ -195,8 +181,45 @@ const App = () => {
     );
   };
 
+  const keyMap = {
+    MOVE_NEXT_10S: ['right'],
+    MOVE_PREV_10S: ['left'],
+    SPEED_UP: ['up'],
+    SPEED_DOWN: ['down'],
+    SET_BEGIN: ['c'],
+    SET_END: ['v'],
+    TO_PARSE: ['p'],
+    PLAY_PAUSE: ['space'],
+  };
+
+  const handlers = {
+    MOVE_NEXT_10S: () => {
+      console.log('+10 sec');
+    },
+    MOVE_PREV_10S: () => {
+      console.log('-10 sec');
+    },
+    SPEED_UP: () => {
+      setSpeed((speed) => speed + 0.1);
+    },
+    SPEED_DOWN: () => {
+      setSpeed((speed) => speed - 0.1);
+    },
+    SET_BEGIN: () => {
+      takeBeginTime();
+    },
+    SET_END: () => {
+      takeEndTime();
+    },
+    PLAY_PAUSE: () => {
+      setPlaying((isPlaying) => !isPlaying);
+    },
+  };
+
   return (
     <>
+      <GlobalHotKeys keyMap={keyMap} handlers={handlers} attach={window} />
+
       <Input setLoaded={setLoaded} isLoaded={isLoaded} />
 
       <div style={{ marginTop: '20px' }}>
@@ -213,15 +236,15 @@ const App = () => {
                 onSeeked={() => {
                   setCurrentTimeShow(convertToMs(current?.currentTime));
                 }}
-                onPlay={() => setPlaying(!isPlaying)}
-                onPause={() => setPlaying(!isPlaying)}
+                // onPlay={() => setPlaying(!isPlaying)}
+                // onPause={() => setPlaying(!isPlaying)}
               />{' '}
               <div>Speed (step=0.1; normal speed=1)</div>
               <input
                 type="number"
                 step={0.1}
-                max={1}
-                min={0.1}
+                // max={1}
+                // min={0.1}
                 value={speed}
                 onChange={({ target: { value } }) => setSpeed(value)}
               />
