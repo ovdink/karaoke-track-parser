@@ -7,6 +7,9 @@ import { db } from './db';
 
 import { Input } from './components';
 
+const imageUrl =
+  'https://noizemc.com/wp-content/uploads/2015/02/Noize-Mc-_-_-_2.600x600-751.jpg';
+
 const App = () => {
   const [isLoaded, setLoaded] = useState(0);
   const [url, setUrl] = useState(null);
@@ -29,6 +32,10 @@ const App = () => {
 
   // _____input speed state_____________
   const [speed, setSpeed] = useState(1);
+
+  // _____info handlers_________________
+  const [author, setAuthor] = useState('');
+  const [songName, setSongName] = useState('');
 
   // _____refs___________________________
   const audioRef = useRef(null);
@@ -165,6 +172,16 @@ const App = () => {
     }
   };
 
+  const formationJsonData = () => {
+    return {
+      author,
+      name: songName,
+      duration: current.duration,
+      image: imageUrl,
+      song: fragmentArr,
+    };
+  };
+
   const listCb = (data, index) => {
     const { text, begin, end } = data;
 
@@ -283,11 +300,30 @@ const App = () => {
       <ul>{fragmentArr.map(listCb)}</ul>
 
       <hr />
+      <p>Info:</p>
+
+      <div>Author:</div>
+      <input
+        value={author}
+        onChange={({ target: { value } }) => {
+          setAuthor(value);
+        }}
+      />
+
+      <div>Song name:</div>
+      <input
+        value={songName}
+        onChange={({ target: { value } }) => {
+          setSongName(value);
+        }}
+      />
+
+      <hr />
 
       <div>
         <button
           children="to json"
-          onClick={() => setJson(JSON.stringify(fragmentArr))}
+          onClick={() => setJson(JSON.stringify(formationJsonData()))}
         />
       </div>
 
