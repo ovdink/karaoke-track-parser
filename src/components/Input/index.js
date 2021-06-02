@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { db } from '../../db';
 
 export const Input = ({ setLoaded, isLoaded }) => {
+  const inputRef = useRef(null);
+
   const handleFileChosen = (file) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -18,7 +20,8 @@ export const Input = ({ setLoaded, isLoaded }) => {
       .then((data) =>
         db.song.add({ id: 0, name: file.name, size: file.size, data })
       )
-      .then(() => setLoaded(++isLoaded));
+      .then(() => setLoaded(++isLoaded))
+      .then(() => inputRef.current.blur());
   };
 
   return (
@@ -29,6 +32,7 @@ export const Input = ({ setLoaded, isLoaded }) => {
       onChange={(e) => {
         addFileToDB(e.target.files[0]);
       }}
+      ref={inputRef}
       onClick={(e) => (e.target.value = null)}
     />
   );
