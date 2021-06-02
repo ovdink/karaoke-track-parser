@@ -203,8 +203,8 @@ const App = () => {
     MOVE_PREV_10S: ['left'],
     SPEED_UP: ['up'],
     SPEED_DOWN: ['down'],
-    SET_BEGIN: ['c'],
-    SET_END: ['v'],
+    SET_BEGIN: ['c', 'с'],
+    SET_END: ['v', 'м'],
     TO_PARSE: ['p'],
     PLAY_PAUSE: ['space'],
   };
