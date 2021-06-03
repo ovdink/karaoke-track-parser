@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactAudioPlayer from 'react-audio-player';
 import { GlobalHotKeys } from 'react-hotkeys';
+import Slider from '@material-ui/core/Slider';
 
 import { db } from './db';
 
@@ -182,6 +183,20 @@ const App = () => {
     };
   };
 
+  const clearTimeOfString = (e, id) => {
+    e.stopPropagation();
+
+    const newArr = fragmentArr.map((item, index) => {
+      if (index === id) {
+        return { text: item.text, begin: null, end: null };
+      }
+
+      return item;
+    });
+
+    setFragmentArr(newArr);
+  };
+
   const listCb = (data, index) => {
     const { text, begin, end } = data;
 
@@ -193,7 +208,12 @@ const App = () => {
         style={{ cursor: 'pointer', backgroundColor: background }}
         onClick={() => setActualStringIndex(index)}
       >
-        ({begin} — {end}) {text}
+        <div style={{ display: 'flex' }}>
+          <div>
+            ({begin} — {end}) {text}
+          </div>
+          <div onClick={(e) => clearTimeOfString(e, index)}>&nbsp;[X]</div>
+        </div>
       </li>
     );
   };
@@ -253,18 +273,7 @@ const App = () => {
                 onSeeked={() => {
                   setCurrentTimeShow(convertToMs(current?.currentTime));
                 }}
-                // onPlay={() => setPlaying(!isPlaying)}
-                // onPause={() => setPlaying(!isPlaying)}
               />{' '}
-              <div>Speed (step=0.1; normal speed=1)</div>
-              <input
-                type="number"
-                step={0.1}
-                // max={1}
-                // min={0.1}
-                value={speed}
-                onChange={({ target: { value } }) => setSpeed(value)}
-              />
             </div>
             <div style={{ display: 'flex' }}>
               <input
@@ -275,9 +284,23 @@ const App = () => {
               <div>&nbsp;/&nbsp;</div>
               <div>{convertToMs(current?.duration)}</div>
             </div>
+
             <div>
               <button children="begin" onClick={takeBeginTime} />
               <button children="end" onClick={takeEndTime} />
+            </div>
+
+            <div style={{ maxWidth: '300px', marginTop: '20px' }}>
+              <div>Speed: {speed} (step=0.05; normal speed=1)</div>
+              <Slider
+                defaultValue={1}
+                min={0.1}
+                max={3}
+                marks
+                step={0.05}
+                value={speed}
+                onChange={(_, value) => setSpeed(value)}
+              ></Slider>
             </div>
           </>
         )}
