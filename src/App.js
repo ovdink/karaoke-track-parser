@@ -77,30 +77,13 @@ const App = () => {
 
   useEffect(() => {
     if (current) {
-      playPause();
+      if (isPlaying) {
+        current.pause();
+      } else {
+        current.play();
+      }
     }
   }, [isPlaying]);
-
-  /*____for currentTime update in UI ____*/
-  // function tick() {
-  //   setCurrentTimeShow(convertToMs(current?.currentTime));
-  // }
-
-  // useEffect(() => {
-  //   const timer = setInterval(tick, 100);
-
-  //   return () => clearInterval(timer);
-  // }, [tick]);
-
-  /*_________________________________________*/
-
-  const playPause = () => {
-    if (isPlaying) {
-      current.pause();
-    } else {
-      current.play();
-    }
-  };
 
   const setTime = (keyTime, valueTime) => {
     if (fragmentArr[actualStringIndex]) {
@@ -118,7 +101,7 @@ const App = () => {
     setUrl(URL.createObjectURL(blob));
   };
 
-  const convertToMs = (currentTime) => {
+  const convertSecToTime = (currentTime) => {
     const ms = currentTime * 1000;
 
     const minutes = Math.floor(ms / 60000);
@@ -127,7 +110,7 @@ const App = () => {
     return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
   };
 
-  const convertTimeToMs = (time) => {
+  const convertTimeToSec = (time) => {
     return Number(time.split(':')[0]) * 60 + Number(time.split(':')[1]);
   };
 
@@ -135,11 +118,13 @@ const App = () => {
     // doenst work with hotkey, but work with button (begin):   const current = audioRef.current?.audioEl.current;
     // setBeginTime(convertToMs(current.currentTime));
 
-    setBeginTime(convertToMs(audioRef.current?.audioEl.current.currentTime));
+    setBeginTime(
+      convertSecToTime(audioRef.current?.audioEl.current.currentTime)
+    );
   };
 
   const takeEndTime = () => {
-    setEndTime(convertToMs(audioRef.current?.audioEl.current.currentTime));
+    setEndTime(convertSecToTime(audioRef.current?.audioEl.current.currentTime));
   };
 
   const onParse = () => {
@@ -164,12 +149,12 @@ const App = () => {
   };
 
   const onListenCurrentTime = (timeMs) => {
-    setCurrentTimeShow(convertToMs(timeMs));
+    setCurrentTimeShow(convertSecToTime(timeMs));
   };
 
   const pressEnterKeyInInput = (e) => {
     if (e.key === 'Enter' && current.currentTime) {
-      current.currentTime = convertTimeToMs(currentTimeShow);
+      current.currentTime = convertTimeToSec(currentTimeShow);
     }
   };
 
@@ -177,7 +162,7 @@ const App = () => {
     return {
       author,
       name: songName,
-      duration: current.duration,
+      duration: convertSecToTime(current.duration),
       image: imageUrl,
       song: fragmentArr,
     };
@@ -271,7 +256,7 @@ const App = () => {
                 listenInterval={50}
                 onListen={onListenCurrentTime}
                 onSeeked={() => {
-                  setCurrentTimeShow(convertToMs(current?.currentTime));
+                  setCurrentTimeShow(convertSecToTime(current?.currentTime));
                 }}
               />{' '}
             </div>
@@ -282,7 +267,7 @@ const App = () => {
                 onKeyDown={pressEnterKeyInInput}
               />
               <div>&nbsp;/&nbsp;</div>
-              <div>{convertToMs(current?.duration)}</div>
+              <div>{convertSecToTime(current?.duration)}</div>
             </div>
 
             <div>
